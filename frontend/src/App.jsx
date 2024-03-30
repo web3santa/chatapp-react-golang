@@ -1,35 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from "react";
+import ChatHistory from "./components/ChatHistory";
+import ChatInput from "./components/ChatInput";
+import { connect } from "./api";
+import { Header } from "./components/Header";
+export const ChatContext = React.createContext();
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [chatHistory, setChatHistory] = useState([]);
+  const [message, setMessage] = useState(null);
+
+  const componentDidMount = () => {
+    var socket = new WebSocket('ws://localhost:9000/ws')
+
+    socket.onmessage = (event) => {
+      const receivedMessage = JSON.parse(event.data);
+      console.log('Received message:', receivedMessage);
+    
+      // chatHistory 상태 업데이트
+      setChatHistory((prevChatHistory) => [...prevChatHistory, receivedMessage]);
+    };
+  };
+  
+  useEffect(() => {
+    componentDidMount();
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="bg-gray-400 m-0 p-0">
+      <ChatContext.Provider value={{chatHistory, setChatHistory, message, setMessage}}>
+        <header>
+          <Header />
+        </header>
+        <ChatHistory />
+        <ChatInput />
+      </ChatContext.Provider>
+    </div>
+  );
 }
 
-export default App
+export default App;
